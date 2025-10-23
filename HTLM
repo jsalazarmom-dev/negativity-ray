@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Negativity Ray — Zurg Control Console</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Inter:wght@400;600&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#071018; --panel:#0b161c; --panel-2:#08121a;
+    --accent:#00e6ff; --muted:#9fb3bf; --card-radius:12px;
+    --blue-1:#0078d4; --blue-2:#005bb5;
+    --good:#4ef29a; --warn:#ffd05b; --bad:#ff6b6b;
+    --purple:#b37bff; --orange:#ff9a3c; --secure-red:#ff3b3b;
+    --zurg-red: #ff4b6e; --zurg-ink: #081018;
+  }
+
+  html,body{height:100%;margin:0;background:
+    radial-gradient(1200px 600px at 10% 10%, rgba(0,60,80,0.12), transparent),
+    linear-gradient(180deg,#04070a 0%, #071018 60%);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+    color:var(--muted);-webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;}
+
+  .container{max-width:1100px;margin:18px auto;padding:14px;box-sizing:border-box;display:grid;grid-template-columns:1fr 380px;gap:14px;align-items:start;}
+  header{grid-column:1/-1;display:flex;align-items:center;gap:12px;margin-bottom:6px}
+  .title {display:flex;flex-direction:column}
+  .title h1{margin:0;font-family:'Orbitron',sans-serif;color:var(--accent);font-size:1.25rem}
+  .title p{margin:2px 0 0;color:#9fcbd9;font-size:.82rem;font-weight:600}
+
+  .primary{display:flex;flex-direction:column;gap:12px}
+  .big-card{background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:18px;border-radius:14px;box-shadow:0 18px 50px rgba(2,8,12,0.6);border:1px solid rgba(255,255,255,0.04)}
+  .countdown-wrap{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+  .countdown-label{font-weight:700;color:#9fd4e0;margin-bottom:6px}
+  .countdown-value{font-family:'Roboto Mono',monospace;color:var(--accent);font-size:3.0rem;line-height:1;letter-spacing:1px}
+
+  .meter-wrap{width:100%;max-width:540px;margin-top:12px}
+  .charge-meter{height:36px;background:#2a0b0b;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,0.03)}
+  .charge-fill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d,#a30000);transition:width 400ms linear}
+  .charge-stats{display:flex;justify-content:space-between;margin-top:8px;align-items:center}
+  .charge-percent{font-family:'Roboto Mono',monospace;color:#ffdddd;font-weight:800}
+  .charge-status{color:#ffd1d1;font-weight:700}
+
+  .controls-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:center;margin-top:12px}
+  .ray-box{display:inline-flex;align-items:center;justify-content:center;width:420px;max-width:100%;height:72px;border-radius:14px;color:#fff;font-weight:900;font-family:'Orbitron',sans-serif;font-size:1.1rem;text-transform:uppercase;letter-spacing:1px;border:2px solid rgba(255,255,255,0.04);cursor:pointer;user-select:none}
+  @keyframes redPulse {0%{box-shadow:0 6px 30px rgba(180,20,20,0.35),0 0 20px rgba(255,70,70,0.18) inset}50%{box-shadow:0 18px 60px rgba(200,30,30,0.45),0 0 60px rgba(255,120,120,0.28) inset}100%{box-shadow:0 6px 30px rgba(180,20,20,0.35),0 0 20px rgba(255,70,70,0.18) inset}}
+  .ray-box.red{background:linear-gradient(180deg,#b30000,#6b0000);animation:redPulse 2.4s ease-in-out infinite;}
+  .ray-box.blue{background:linear-gradient(180deg,#0078d4,#005bb5);box-shadow:0 10px 30px rgba(0,80,160,0.2)}
+
+  .btn.blue-large{
+    background:linear-gradient(180deg,var(--blue-1),var(--blue-2));
+    border:1px solid rgba(255,255,255,0.06);box-shadow:0 12px 36px rgba(0,100,200,0.18);
+    padding:14px 24px;font-size:1rem;border-radius:12px;color:#fff;font-weight:800;min-width:260px;
+  }
+
+  aside{display:flex;flex-direction:column;gap:12px}
+  .card{background:linear-gradient(180deg,var(--panel),var(--panel-2));padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04)}
+  .small-label{color:#7fb0bd;font-size:.82rem;margin-bottom:8px;font-weight:700}
+
+  .tele-grid{display:flex;flex-direction:column;gap:8px}
+  .tele-row{display:flex;justify-content:space-between;align-items:center;padding:8px;border-radius:8px;background:linear-gradient(90deg,rgba(255,255,255,0.01),transparent)}
+  .tele-label{color:#9fd4e0;font-weight:700;font-size:.9rem}
+  .tele-value{font-family:'Roboto Mono',monospace;font-weight:800;color:var(--muted)}
+  .val-good{color:var(--good)}
+  .val-warn{color:var(--warn)}
+  .val-sec{color:var(--accent)}
+  .val-bad{color:var(--bad)}
+
+  .modules{display:flex;flex-direction:column;gap:10px}
+  .module-row{display:flex;justify-content:space-between;align-items:center}
+  .badge{display:inline-flex;align-items:center;gap:8px;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.03);color:var(--muted);font-weight:600;font-size:.86rem}
+  .led{width:10px;height:10px;border-radius:50%}
+
+  .audit{grid-column:1/-1;display:flex;flex-direction:column}
+  .log{max-height:260px;overflow:auto;padding:10px;background:linear-gradient(180deg,#03141a,#071419);border-radius:10px;border:1px solid rgba(255,255,255,0.04);font-family:'Roboto Mono',monospace;color:var(--muted);font-size:0.88rem}
+
+  /* Zurg-style authentication popup (unified across site) */
+  .zurg-popup {
+    display:none;
+    position:fixed;
+    inset:0;
+    align-items:center;
+    justify-content:center;
+    z-index:3000;
+    backdrop-filter: blur(6px);
+  }
+  .zurg-card{
+    width: min(560px, 96%);
+    background: linear-gradient(135deg,#1a0210 0%, #0b0810 40%, #0b0a12 100%);
+    border-radius:14px;
+    padding:18px;
+    border: 2px solid rgba(255,75,110,0.06);
+    box-shadow: 0 26px 70px rgba(0,0,0,0.75), 0 0 40px rgba(255,75,110,0.05) inset;
+    color: var(--muted);
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+  }
+  .zurg-card::before{
+    content:'';
+    position:absolute; inset:-40% -30% auto -30%; height:120px;
+    background: radial-gradient(circle at 20% 30%, rgba(255,75,110,0.12), transparent 20%),
+                radial-gradient(circle at 80% 70%, rgba(0,120,255,0.08), transparent 15%);
+    transform: rotate(-8deg);
+    pointer-events:none;
+  }
+  .zurg-title{font-family:'Orbitron',sans-serif;color:var(--zurg-red);font-size:1.18rem;margin-bottom:6px;font-weight:900;letter-spacing:0.6px}
+  .zurg-sub{color:#e6a6c0;margin-bottom:10px;font-weight:700}
+  .zurg-input{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:6px}
+  .zurg-input input{
+    width:100%;max-width:420px;padding:12px 14px;border-radius:12px;border:2px solid rgba(255,75,110,0.12);
+    background:linear-gradient(180deg,#081014,#0b0a0f);color:#ffccd9;font-family:'Roboto Mono',monospace;font-size:1rem;
+    box-shadow:0 8px 30px rgba(0,0,0,0.6) inset;
+    letter-spacing:0.6px;
+  }
+  .zurg-buttons{display:flex;gap:10px;justify-content:center;margin-top:12px;flex-wrap:wrap}
+  .zurg-btn{
+    padding:10px 16px;border-radius:12px;border:none;cursor:pointer;font-weight:900;color:#04121b;background:linear-gradient(180deg,#ffd5e0,#ffeef6);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.45);
+    letter-spacing:0.6px;
+  }
+  .zurg-error{color:#ff9db0;margin-top:8px;height:1.2em;font-weight:800}
+
+  .neon-zurg{
+    position:absolute;inset:0;border-radius:14px;padding:2px;pointer-events:none;
+    background: conic-gradient(from 0deg, rgba(255,75,110,0.15), rgba(0,120,255,0.08), rgba(255,154,60,0.06));
+    mix-blend-mode:screen;opacity:.8;filter:blur(14px);
+  }
+
+  @media (max-width:900px){
+    .container{grid-template-columns:1fr; padding:12px; gap:10px}
+    aside{order:3}
+    .primary{order:1}
+    .audit{order:2}
+    .ray-box{height:64px}
+    .countdown-value{font-size:2.4rem}
+    .btn.blue-large{min-width:180px;padding:12px 18px}
+    .zurg-card{padding:14px}
+    .zurg-title{font-size:1.05rem}
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div class="title">
+        <h1>NEGATIVITY RAY</h1>
+        <p>Zurg Control Console — Hostile UI</p>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:10px;align-items:center">
+        <div class="badge"><span class="led" style="background:#00ff9f"></span> SYSTEM: ONLINE</div>
+        <div class="badge"><span class="led" style="background:var(--warn)"></span> POWER: COLLECTING</div>
+      </div>
+    </header>
+
+    <div class="primary">
+      <div class="big-card">
+        <div class="countdown-wrap">
+          <div class="countdown-label">Countdown To Activation</div>
+          <div id="countdown" class="countdown-value" aria-live="polite">04:12:00</div>
+
+          <div class="meter-wrap" aria-hidden="false">
+            <div class="charge-meter">
+              <div id="powerMeterFill" class="charge-fill" style="width:0%"></div>
+            </div>
+            <div class="charge-stats">
+              <div class="charge-percent" id="meterPercent">0%</div>
+              <div class="charge-status" id="powerStatus">Standby</div>
+            </div>
+          </div>
+
+          <div class="controls-row" style="margin-top:12px">
+            <div id="rayBox" class="ray-box red" role="button" aria-pressed="true">RAY ACTIVATED</div>
+            <button id="openPass" class="btn blue-large">Emergency Self Destruct Button</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card audit">
+        <div class="small-label">Audit Log</div>
+        <div id="auditLog" class="log" aria-live="polite"></div>
+      </div>
+    </div>
+
+    <aside>
+      <div class="card">
+        <div class="small-label">Telemetry</div>
+        <div class="tele-grid" id="teleGrid">
+          <div class="tele-row"><div class="tele-label">Core Temp</div><div id="coreTemp" class="tele-value">72.1°C</div></div>
+          <div class="tele-row"><div class="tele-label">Emitter Voltage</div><div id="emitterVolt" class="tele-value">9.8kV</div></div>
+          <div class="tele-row"><div class="tele-label">Coolant Flow</div><div id="coolantFlow" class="tele-value val-good">3.20 L/min</div></div>
+          <div class="tele-row"><div class="tele-label">Encryption</div><div id="encryption" class="tele-value val-sec">2112 DEC</div></div>
+          <div class="tele-row"><div class="tele-label">Network Latency</div><div id="netLatency" class="tele-value val-good">42 ms</div></div>
+          <div class="tele-row"><div class="tele-label">Comm Link</div><div id="commLink" class="tele-value val-sec">Secure</div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="small-label">System Modules</div>
+        <div class="modules">
+          <div class="module-row"><div><strong style="color:var(--accent)">Targeting</strong><div style="font-size:.82rem;color:var(--muted)">Locked</div></div><div style="width:68px"></div></div>
+          <div class="module-row"><div><strong style="color:#ffd05b">Control Panel Security Check</strong><div style="font-size:.82rem;color:var(--muted)">Proxi Login Detected</div></div><div class="badge"><span class="led" style="background:var(--secure-red)"></span>UZA</div></div>
+          <div class="module-row"><div><strong style="color:var(--orange)">Mood Inversion Reactor</strong><div style="font-size:.82rem;color:var(--muted)">Nominal</div></div><div class="badge"><span class="led" style="background:var(--orange)"></span></div></div>
+          <div class="module-row"><div><strong style="color:var(--purple)">Cosmic Power Siphon</strong><div style="font-size:.82rem;color:var(--muted)">Active</div></div><div class="badge"><span class="led" style="background:var(--purple)"></span></div></div>
+          <div class="module-row"><div><strong style="color:#a9f1ff">Cryo Coolant Reservoir</strong><div style="font-size:.82rem;color:var(--muted)">Stable</div></div><div class="badge"><span class="led" style="background:var(--warn)"></span></div></div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Unified Zurg-style popup used for all password interactions -->
+  <div id="zurgPopup" class="zurg-popup" role="dialog" aria-modal="true" aria-labelledby="zurgTitle">
+    <div class="zurg-card" role="document">
+      <div class="neon-zurg" aria-hidden="true"></div>
+
+      <div id="zurgTitle" class="zurg-title">ZURG GRUNT AUTH</div>
+      <div id="zurgSub" class="zurg-sub">Enter Self-Destruction Password</div>
+
+      <div class="zurg-input">
+        <input id="zurgInput" type="text" inputmode="text" autocomplete="off" placeholder="enter self-destruction password..." aria-label="Zurg passphrase" />
+      </div>
+
+      <div class="zurg-buttons">
+        <button id="zurgCancel" class="zurg-btn" style="background:linear-gradient(180deg,#ffdede,#fff2f2)">Abort</button>
+        <button id="zurgSubmit" class="zurg-btn" style="background:linear-gradient(180deg,#ffb3c9,#ffdfee)">Submit</button>
+      </div>
+
+      <div id="zurgError" class="zurg-error" aria-live="polite"></div>
+    </div>
+  </div>
+
+  <!-- Activation popup -->
+  <div id="activationPopup" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);align-items:center;justify-content:center;z-index:2000">
+    <div style="background:#07171a;padding:16px;border-radius:10px;color:var(--muted);min-width:300px">
+      <div id="activationMessage" style="font-weight:800;color:var(--accent)"></div>
+      <div style="display:flex;justify-content:flex-end;margin-top:12px"><button id="closeActivationPopup" class="btn blue-large">OK</button></div>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <audio id="deactivationSound" src="https://actions.google.com/sounds/v1/weapons/big_explosion_cut_off.ogg" preload="auto"></audio>
+  <audio id="wrongSound" src="https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg" preload="auto"></audio>
+
+<script>
+  // Main UI elements
+  const openPass = document.getElementById('openPass');
+  const rayBox = document.getElementById('rayBox');
+  const countdownEl = document.getElementById('countdown');
+  const powerMeterFill = document.getElementById('powerMeterFill');
+  const meterPercent = document.getElementById('meterPercent');
+  const powerStatus = document.getElementById('powerStatus');
+  const auditLog = document.getElementById('auditLog');
+
+  // Zurg popup elements (unified)
+  const zurgPopup = document.getElementById('zurgPopup');
+  const zurgInput = document.getElementById('zurgInput');
+  const zurgSubmit = document.getElementById('zurgSubmit');
+  const zurgCancel = document.getElementById('zurgCancel');
+  const zurgError = document.getElementById('zurgError');
+  const zurgTitle = document.getElementById('zurgTitle');
+  const zurgSub = document.getElementById('zurgSub');
+
+  // Activation popup
+  const activationPopup = document.getElementById('activationPopup');
+  const activationMessage = document.getElementById('activationMessage');
+  const closeActivationPopup = document.getElementById('closeActivationPopup');
+
+  // Sounds
+  const deactSound = document.getElementById('deactivationSound');
+  const wrongSound = document.getElementById('wrongSound');
+
+  // Telemetry nodes
+  const coreTempEl = document.getElementById('coreTemp');
+  const emitterVoltEl = document.getElementById('emitterVolt');
+  const coolantFlowEl = document.getElementById('coolantFlow');
+  const netLatencyEl = document.getElementById('netLatency');
+  const encryptionEl = document.getElementById('encryption');
+  const commLinkEl = document.getElementById('commLink');
+
+  // Telemetry simulation variables
+  let coreTemp = 72.1, emitterVolt = 9.8, coolantFlow = 3.2, netLatency = 42;
+  const CORE_DELTA = 2.0, VOLT_DELTA = 0.2, FLOW_DELTA = 0.15, LAT_DELTA = 8;
+  function rand(min,max){ return Math.random()*(max-min)+min; }
+
+  // Countdown initial values
+  const START_SECONDS = 4*3600 + 12*60;
+  let totalSeconds = START_SECONDS;
+  let countdownInterval = null;
+  function pad(n){ return String(n).padStart(2,'0'); }
+  function fmtTime(s){
+    const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), ss = s%60;
+    return `${pad(h)}:${pad(m)}:${pad(ss)}`;
+  }
+
+  // Utility: append log with optional timestamp
+  function prependLogEntry(text, dateObj){
+    const timeLabel = (dateObj || new Date()).toLocaleTimeString();
+    const d = document.createElement('div');
+    d.textContent = `[${timeLabel}] ${text}`;
+    auditLog.prepend(d);
+  }
+
+  // Initialize pre-populated logs
+  function initLogs(){
+    const now = new Date();
+    const fourHoursAgo = new Date(now.getTime() - 4 * 3600 * 1000);
+    prependLogEntry('System Engaged, Power Collection Initialized', fourHoursAgo);
+    prependLogEntry('Contol Pannel Hacked', now);
+  }
+
+  // Telemetry updater
+  function startTelemetry(){
+    setInterval(() => {
+      coreTemp += rand(-0.12,0.12);
+      coreTemp = Math.max(72.1 - CORE_DELTA, Math.min(72.1 + CORE_DELTA, coreTemp));
+      emitterVolt += rand(-0.012,0.012);
+      emitterVolt = Math.max(9.8 - VOLT_DELTA, Math.min(9.8 + VOLT_DELTA, emitterVolt));
+      coolantFlow += rand(-0.06,0.06);
+      coolantFlow = Math.max(3.2 - FLOW_DELTA, Math.min(3.2 + FLOW_DELTA, coolantFlow));
+      netLatency += rand(-1.2,1.2);
+      netLatency = Math.max(42 - LAT_DELTA, Math.min(42 + LAT_DELTA, netLatency));
+
+      coreTempEl.textContent = coreTemp.toFixed(1) + '°C';
+      emitterVoltEl.textContent = emitterVolt.toFixed(1) + 'kV';
+      coolantFlowEl.textContent = coolantFlow.toFixed(2) + ' L/min';
+      netLatencyEl.textContent = Math.round(netLatency) + ' ms';
+
+      coreTempEl.className = coreTemp < 74 ? 'tele-value val-good' : (coreTemp < 75.5 ? 'tele-value val-warn' : 'tele-value val-bad');
+      const vDiff = Math.abs(emitterVolt - 9.8);
+      emitterVoltEl.className = vDiff < 0.08 ? 'tele-value val-good' : (vDiff < 0.16 ? 'tele-value val-warn' : 'tele-value val-bad');
+      coolantFlowEl.className = coolantFlow < 2.9 ? 'tele-value val-warn' : 'tele-value val-good';
+      netLatencyEl.className = netLatency > 70 ? 'tele-value val-warn' : 'tele-value val-good';
+      encryptionEl.className = 'tele-value val-sec';
+      commLinkEl.className = 'tele-value val-sec';
+    }, 700);
+  }
+
+  // Countdown + meter UI
+  function updateMeterUIFromSeconds(){
+    const pct = Math.max(0, Math.min(100, Math.round(((START_SECONDS - totalSeconds) / START_SECONDS) * 100)));
+    powerMeterFill.style.width = pct + '%';
+    meterPercent.textContent = pct + '%';
+    powerStatus.textContent = pct < 85 ? 'Standby' : (pct < 99 ? 'Charging' : 'Ready');
+    powerMeterFill.style.background = pct >= 99 ? 'linear-gradient(90deg,#ff7b7b,#a30000)' : 'linear-gradient(90deg,#ff4d4d,#a30000)';
+  }
+
+  function startCountdown(){
+    if(countdownInterval) clearInterval(countdownInterval);
+    countdownInterval = setInterval(() => {
+      if(totalSeconds >= 0){
+        countdownEl.textContent = fmtTime(totalSeconds);
+        updateMeterUIFromSeconds();
+        totalSeconds--;
+      } else {
+        clearInterval(countdownInterval);
+        countdownEl.textContent = '00:00:00';
+        updateMeterUIFromSeconds();
+        prependLogEntry('Countdown reached zero', new Date());
+      }
+    }, 1000);
+  }
+
+  // Visual drain triggered on correct override (independent of totalSeconds)
+  let drainInterval = null;
+  function startEmptyMeterVisual(){
+    if(drainInterval) return;
+    if(countdownInterval) clearInterval(countdownInterval);
+    drainInterval = setInterval(() => {
+      const cur = parseInt(powerMeterFill.style.width || '0', 10);
+      const next = Math.max(0, cur - 1);
+      powerMeterFill.style.width = next + '%';
+      meterPercent.textContent = next + '%';
+      powerStatus.textContent = next > 0 ? 'Depleting' : 'Depleted';
+      if(next <= 0){
+        clearInterval(drainInterval);
+        drainInterval = null;
+        setRayBoxToAudriaAction();
+        prependLogEntry('Power depleted (meter drained)', new Date());
+      }
+    }, 40);
+  }
+
+  // Sound helpers
+  function playWrong(){
+    try{ wrongSound.currentTime = 0; wrongSound.volume = 1; wrongSound.play(); }catch(e){}
+  }
+  function playDeact(){
+    try{ deactSound.currentTime = 0; deactSound.volume = 1; deactSound.play(); }catch(e){}
+  }
+
+  // When the deactivation sound ends, also set ray box to blue state
+  deactSound.addEventListener('ended', () => {
+    // Ensure visual state changes at sound end
+    setRayBoxToAudriaAction();
+    prependLogEntry('Deactivation sound ended — blue self-destruction state engaged', new Date());
+  });
+
+  // Unified Zurg auth handler - unlimited attempts allowed
+  function openZurgPopup(){
+    zurgError.textContent = '';
+    zurgInput.value = '';
+    zurgInput.disabled = false;
+    zurgSubmit.disabled = false;
+    zurgCancel.disabled = false;
+    zurgTitle.textContent = 'ZURG GRUNT AUTH';
+    zurgSub.textContent = 'Enter Self-Destruction Password';
+    zurgPopup.style.display = 'flex';
+    setTimeout(()=> zurgInput.focus(), 50);
+  }
+
+  function closeZurgPopup(){
+    zurgPopup.style.display = 'none';
+  }
+
+  function handleZurgSubmit(){
+    const p = (zurgInput.value || '').trim().toLowerCase();
+
+    if(!p){
+      zurgError.textContent = 'You must enter the passphrase.';
+      return;
+    }
+
+    // Correct phrase triggers depletion and plays sound
+    if(p === 'kindness'){
+      closeZurgPopup();
+      prependLogEntry('Correct auth: kindness — override accepted', new Date());
+      playDeact();
+      startEmptyMeterVisual();
+      return;
+    }
+
+    // Special game commands preserved
+    if(p === 'change'){
+      totalSeconds = 1800;
+      closeZurgPopup();
+      prependLogEntry('Zurg command: change -> countdown set to 30 minutes', new Date());
+      showActivationPopup('Countdown reset to 30 minutes');
+      startCountdown();
+      return;
+    }
+    if(p === '5818'){
+      closeZurgPopup();
+      const n = prompt("Enter new countdown time in minutes (1 - 1440):");
+      if(n !== null){
+        const m = parseInt(n,10);
+        if(Number.isInteger(m) && m >=1 && m <= 1440){
+          totalSeconds = m*60;
+          prependLogEntry(`Zurg override: countdown reset to ${m} minute(s)`, new Date());
+          showActivationPopup(`Countdown reset to ${m} minute${m===1?'':'s'}`);
+          startCountdown();
+        } else alert("Invalid time. Please enter a number between 1 and 1440.");
+      }
+      return;
+    }
+
+    // Playful Zurg-framed responses — inline
+    const lower = p;
+    if(lower === 'audria'){
+      playWrong();
+      zurgError.textContent = "Zurg: 'Audria? Not in this sector.'";
+      prependLogEntry('Grunt attempt: "audria" — mocked celebration', new Date());
+      zurgInput.focus();
+      zurgInput.select();
+      return;
+    }
+
+    if(lower === 'password'){
+      playWrong();
+      zurgError.textContent = "Zurg snorts: 'Weak grunt.'";
+      prependLogEntry('Grunt attempt: "password" — futile', new Date());
+      zurgInput.focus();
+      zurgInput.select();
+      return;
+    }
+
+    if(lower === 'disney' || lower === 'dinsey'){
+      playWrong();
+      zurgError.textContent = "Zurg laughs: 'Not relevant.'";
+      prependLogEntry('Grunt attempt: "disney" — dismissed', new Date());
+      zurgInput.focus();
+      zurgInput.select();
+      return;
+    }
+
+    if(lower === 'please' || lower === 'plase'){
+      playWrong();
+      totalSeconds += 30;
+      zurgError.textContent = "Zurg amused: 'You beg? +30s.'";
+      prependLogEntry('Grunt attempted "please" — system grants +30s mock penalty', new Date());
+      startCountdown();
+      zurgInput.focus();
+      zurgInput.select();
+      return;
+    }
+
+    // Default incorrect handling (unlimited attempts allowed)
+    playWrong();
+    zurgError.textContent = getRandomWrong();
+    prependLogEntry(`Failed grunt phrase attempt: "${p}"`, new Date());
+    zurgInput.focus();
+    zurgInput.select();
+  }
+
+  // Randomized wrong prompts (Zurg-themed)
+  const WRONG_PROMPTS = [
+    "Zurg rejects it. Try less pathetic.",
+    "Access denied: grunt phrase invalid.",
+    "The console giggles. Not right.",
+    "Wrong. Zurg is displeased.",
+    "Failure. Do not waste Zurg's time."
+  ];
+  function getRandomWrong(){ return WRONG_PROMPTS[Math.floor(Math.random()*WRONG_PROMPTS.length)]; }
+
+  // Activation popup helpers
+  function showActivationPopup(msg, html=false){
+    if(html) activationMessage.innerHTML = msg; else activationMessage.textContent = msg;
+    activationPopup.style.display = 'flex';
+    closeActivationPopup.focus();
+  }
+  function hideActivationPopup(){ activationPopup.style.display = 'none'; }
+
+  // Ray behavior
+  function setRayBoxToAudriaAction(){
+    rayBox.classList.remove('red');
+    rayBox.classList.add('blue');
+    rayBox.textContent = 'SELF-DESTRUCTION ACTIVATED';
+    rayBox.setAttribute('aria-pressed','false');
+    rayBox.style.pointerEvents = 'auto';
+  }
+
+  rayBox.addEventListener('click', ()=>{
+    if(rayBox.classList.contains('red')){
+      playWrong();
+      showActivationPopup("Zurg: 'Do not poke the ray.'");
+      prependLogEntry('Ray box poked while active (blocked)', new Date());
+    } else {
+      const html = `<div style="text-align:center">
+        <div style="font-size:1.1rem;font-weight:900;color:#bfe6ff;margin-bottom:8px">Happy 10th Birthday Audria!</div>
+        <img src="https://media.giphy.com/media/5jT0jaNDsM6Ik7X9yq/giphy.gif" style="max-width:320px;border-radius:8px" alt="confetti"/>
+      </div>`;
+      showActivationPopup(html, true);
+      prependLogEntry('Audria action pressed — confetti shown', new Date());
+      rayBox.style.pointerEvents = 'none';
+    }
+  });
+
+  // Zurg popup wiring (unified)
+  openPass.addEventListener('click', openZurgPopup);
+  zurgCancel.addEventListener('click', ()=>{ closeZurgPopup(); prependLogEntry('Zurg login aborted', new Date()); });
+  zurgSubmit.addEventListener('click', handleZurgSubmit);
+  zurgInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter'){ e.preventDefault(); handleZurgSubmit(); } else if(e.key === 'Escape'){ e.preventDefault(); closeZurgPopup(); } });
+
+  // global click/escape handlers
+  closeActivationPopup.addEventListener('click', hideActivationPopup);
+  document.addEventListener('click', (e)=>{ if(e.target === activationPopup) hideActivationPopup(); if(e.target === zurgPopup) closeZurgPopup(); });
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ if(zurgPopup.style.display === 'flex') closeZurgPopup(); if(activationPopup.style.display === 'flex') hideActivationPopup(); } });
+
+  // Initialization: telemetry, countdown, logs
+  function init(){
+    initLogs();
+    startTelemetry();
+    startCountdown();
+    updateMeterUIFromSeconds();
+  }
+  init();
+</script>
+</body>
+</html>
