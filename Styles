@@ -1,0 +1,27 @@
+/// 设置目标时间（例如：2025年10月10日 00:00:00）
+const targetDate = new Date("2025-10-10T00:00:00").getTime();
+
+const countdownElement = document.getElementById("countdown");
+
+function updateCountdown() {
+  const now = new Date().getTime();
+  const distance = targetDate - now;
+
+  if (distance < 0) {
+    countdownElement.innerText = "倒计时结束 🎉";
+    return;
+  }
+
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+  countdownElement.innerText =
+    `${days}天 ${hours}小时 ${minutes}分钟 ${seconds}秒`;
+}
+
+// 每秒更新一次倒计时
+updateCountdown(); // 页面加载时先执行一次
+setInterval(updateCountdown, 1000);
+
