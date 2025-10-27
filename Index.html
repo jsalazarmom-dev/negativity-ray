@@ -1,0 +1,1146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>P.I.A. Control Panel — Escape Mission</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-deep:#080d1a;
+    --panel:#0e1734;
+    --panel-2:#0a1128;
+    --neon-blue:#21b1ff;
+    --neon-red:#ff2d55;
+    --neon-pink:#ff4dd2;
+    --warning-yellow:#ffd400;
+    --ok:#27d17f;
+    --soft:#e7f1ff;
+    --muted:#8aa2d6;
+
+    /* injector palettes */
+    --inj-a1:#9b5cff; --inj-a2:#ff2d55;   /* Snark */
+    --inj-b1:#00f0ff; --inj-b2:#22ff88;   /* Grump (teal→green) */
+    --inj-c1:#ff9f1a; --inj-c2:#ff3d81;   /* Drama */
+    --inj-d1:#6ef7ff; --inj-d2:#3a8bff;   /* Eye-Rolls */
+  }
+
+  *{box-sizing:border-box}
+  html,body{
+    height:100%;margin:0;color:var(--soft);
+    background:radial-gradient(1200px 700px at 20% -10%,#0b1b40 0,#050a19 50%,#030712 100%);
+    font-family:Nunito,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+    overflow:auto;
+  }
+
+  .app{min-height:100vh;display:grid;grid-template-columns:1.25fr .75fr;gap:16px;padding:16px}
+  .panel{
+    position:relative;border-radius:14px;padding:14px;
+    background:linear-gradient(180deg,rgba(20,32,72,.92),rgba(10,18,46,.92));
+    border:1px solid rgba(255,255,255,.06);
+    box-shadow:0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.04);
+    overflow:auto;
+  }
+
+  .sticky-head{
+    position:sticky; top:0; z-index:5;
+    background:linear-gradient(180deg,rgba(6,12,28,.8),rgba(6,12,28,.4));
+    border:1px solid rgba(255,255,255,.05);
+    border-radius:12px; padding:10px; margin-bottom:10px;
+    backdrop-filter: blur(6px);
+  }
+  .leds{display:flex;gap:8px;align-items:center}
+  .dot{width:9px;height:9px;border-radius:50%}
+  .dot.r{background:#ff4d6d;box-shadow:0 0 10px #ff4d6d}
+  .dot.y{background:#ffd400;box-shadow:0 0 10px #ffd400;animation:blink 1.6s ease-in-out infinite}
+  .dot.g{background:#39ff86;box-shadow:0 0 10px #39ff86;animation:blink 2.2s ease-in-out infinite}
+  @keyframes blink{0%,100%{filter:brightness(.9)}50%{filter:brightness(1.6)}}
+
+  .marquee{
+    overflow:hidden; white-space:nowrap; width:100%;
+    border-radius:8px; border:1px solid rgba(255,255,255,.06);
+    background:linear-gradient(180deg,rgba(255,255,255,.02),transparent);
+    margin-top:8px;
+  }
+  .marquee span{
+    display:inline-block; padding:4px 0 6px 100%;
+    font-family:Orbitron; font-weight:900; letter-spacing:2px;
+    font-size:22px; color:var(--neon-red);
+    text-shadow:0 0 16px rgba(255,45,85,.45), 0 0 30px rgba(255,45,85,.25);
+    animation:slide 22s linear infinite;
+  }
+  @keyframes slide { from{ transform:translateX(0);} to{ transform:translateX(-100%);} }
+
+  .title-row{ display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center; }
+
+  .timer{
+    display:grid;place-items:center;gap:6px;margin-top:10px;padding:12px;border-radius:12px;
+    border:1px solid rgba(33,177,255,.20);
+    background:linear-gradient(180deg,rgba(10,20,54,.6),rgba(8,16,42,.4))
+  }
+  .time{font-family:Orbitron,monospace;font-size:64px;letter-spacing:1.5px;font-weight:900;
+    color:var(--neon-blue);text-shadow:0 0 14px rgba(33,177,255,.35)}
+  .status{font-size:13px;color:var(--muted);text-transform:uppercase}
+
+  .cta-center{display:flex;justify-content:center}
+  .btn{border:none;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;position:relative;overflow:hidden}
+  .btn-emergency{background:linear-gradient(180deg,#ff3b62,#c21339);color:#fff;border:1px solid rgba(255,255,255,.06);
+    box-shadow:0 10px 30px rgba(255,45,85,0.25),0 0 26px rgba(255,255,255,.22)}
+  .btn-activate{
+    --stripe:#fff; --stripe2:#ffd400;
+    background:repeating-linear-gradient(135deg,var(--stripe) 0 12px,var(--stripe2) 12px 24px);
+    color:#0a0f1c;border:2px solid #0a0f1c;border-radius:10px;
+    padding:14px 22px;
+    font-weight:900; transform:scale(1.15);
+    box-shadow:0 10px 28px rgba(255,255,255,.08);
+    display:none;
+  }
+  .btn-activate.enabled{display:inline-flex}
+  .btn-activate.attention{animation:pulseGlow 1s ease-in-out infinite}
+  @keyframes pulseGlow{
+    0%{ box-shadow:0 0 0 rgba(255,212,0,.0), 0 0 12px rgba(255,212,0,.15);}
+    50%{ box-shadow:0 0 24px rgba(255,212,0,.45), 0 0 28px rgba(255,212,0,.35);}
+    100%{ box-shadow:0 0 0 rgba(255,212,0,.0), 0 0 12px rgba(255,212,0,.15);}
+  }
+
+  /* Hold-to-act progress fill for power button */
+  .btn-hold::before{
+    content:"";
+    position:absolute; inset:0;
+    width:var(--hold, 0%);
+    height:100%;
+    background:linear-gradient(180deg,rgba(82,210,255,.45),rgba(26,160,255,.35));
+    box-shadow:inset 0 0 12px rgba(82,210,255,.25);
+    transition:width .05s linear;
+    pointer-events:none;
+  }
+
+  .charge{margin-top:14px;padding:12px;border-radius:12px;border:1px solid rgba(255,45,85,.15);background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01))}
+  .charge-top{display:flex;justify-content:space-between;margin-bottom:8px}
+  .bar{height:24px;border-radius:12px;overflow:hidden;background:rgba(255,255,255,.06)}
+  .fill{height:100%;width:0;background:linear-gradient(90deg,#ff2d55,#ff0078);filter:drop-shadow(0 0 12px rgba(255,45,85,.35));transition:width .6s}
+
+  .steps{margin-top:10px}
+  .steps h3{margin:0 0 6px;font-family:Orbitron;font-size:12px;color:#cfe2ff;text-transform:uppercase}
+  .step-list{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+  .step{padding:8px;border-radius:10px;border:1px dashed rgba(255,255,255,.12);background:rgba(255,255,255,.02);display:flex;align-items:center;gap:8px}
+  .step .txt{flex:1}
+  .step .check{font-family:Orbitron;color:#8cf59f;display:none}
+  .step.done .check{display:inline}
+  .step.done .txt{opacity:.85; text-decoration:line-through}
+  .steps .toggle-all{margin-top:6px;font-size:12px;color:#9bb5ff;cursor:pointer;text-decoration:underline}
+
+  .right{display:grid;gap:12px}
+  .group{padding:10px;border-radius:12px;background:linear-gradient(180deg,rgba(16,26,62,.7),rgba(8,14,36,.5));border:1px solid rgba(255,255,255,.06)}
+
+  /* Injector */
+  .injector{display:flex;gap:10px;align-items:stretch}
+  .bars{display:flex;align-items:flex-end;gap:6px;height:100px;padding:6px;background:rgba(255,255,255,.03);border-radius:8px;border:1px solid rgba(255,255,255,.06);flex:1;transition:filter .2s}
+  .barcol{width:calc((100% - 15*6px)/16); background:linear-gradient(180deg,var(--inj-a1),var(--inj-a2));height:18%;transition:height .35s}
+  .toggle{display:inline-grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;border-radius:999px;background:rgba(0,0,0,.28);align-self:center}
+  .toggle button{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.06);color:#cfe2ff;cursor:pointer;font-weight:800}
+  .toggle button.active{background:linear-gradient(180deg,#52d2ff,#1aa0ff);color:#081224}
+  .toggle.locked{filter:grayscale(1) brightness(.7);pointer-events:none}
+  .toggleGlow{animation:glowPulse 1.3s ease-in-out infinite}
+  @keyframes glowPulse{
+    0%{ box-shadow:0 0 0 0 rgba(39,209,127,.0);}
+    50%{ box-shadow:0 0 20px 2px rgba(39,209,127,.35);}
+    100%{ box-shadow:0 0 0 0 rgba(39,209,127,.0);}
+  }
+  .chip{margin-left:6px;font-size:12px;padding:2px 8px;border-radius:999px;border:1px solid}
+  .chip.locked{background:rgba(255,77,77,.12);border-color:rgba(255,77,77,.35);color:#ff9fa0}
+  .chip.online{background:rgba(82,210,255,.12);border-color:rgba(82,210,255,.35);color:#bfe8ff}
+  .chip.offline{background:rgba(180,180,180,.08);border-color:rgba(180,180,180,.3);color:#cfd7e6}
+
+  .palette{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+  .pill{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);cursor:pointer}
+  .pill.active{box-shadow:0 0 0 2px rgba(255,255,255,.14) inset}
+  .pill.target{outline:2px dashed rgba(34,255,136,.6); outline-offset:2px}
+
+  /* On-screen instruction hint */
+  .hint{
+    margin-top:8px;font-size:12px;color:#bfe0ff;
+    background:rgba(255,255,255,.04);
+    border:1px dashed rgba(255,255,255,.18);
+    border-radius:8px;padding:8px 10px;
+  }
+
+  .metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .metric{padding:8px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);font-size:13px}
+  .metric label{font-size:11px;color:var(--muted);text-transform:uppercase}
+  .metric .val{font-family:Orbitron;font-size:16px;font-weight:900}
+  .val.up{color:#7cffb1}
+  .val.down{color:#ff9fb4}
+
+  .lamp{width:18px;height:18px;border-radius:50%;background:#2bffb5;border:2px solid rgba(255,255,255,.25)}
+  .lamp.pulse{animation:lampPulse 1.6s ease-in-out infinite}
+  .lamp.off{background:#ff3355; animation:none;}
+  @keyframes lampPulse{0%{filter:brightness(.9)}50%{filter:brightness(1.4)}100%{filter:brightness(.9)}}
+  .injector-warning{box-shadow:0 0 0 0 rgba(255,166,0,.35); animation:warn 1.4s ease-in-out infinite}
+  @keyframes warn{0%{box-shadow:0 0 0 0 rgba(255,166,0,.20)}70%{box-shadow:0 0 24px 6px rgba(255,166,0,.35)}100%{box-shadow:0 0 0 0 rgba(255,166,0,.0)}}
+
+  .aside-gif{width:100%;max-width:220px;height:120px;border-radius:10px;border:1px solid rgba(255,255,255,.06);object-fit:cover;filter:brightness(.95) saturate(1.15);transition:opacity .6s ease, filter .6s ease}
+  .aside-gif.fade{opacity:.15; filter:grayscale(1) brightness(.6)}
+
+  .overlay{position:fixed;inset:0;background:rgba(3,8,20,.92);display:none;place-items:center;z-index:80;padding:16px;overflow:auto}
+  .overlay.show{display:grid}
+  .modal{background:linear-gradient(180deg,#101b44,#0c1538);padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 80px rgba(2,6,16,.85);max-width:980px;width:min(96vw,980px)}
+
+  /* ===== Access Granted ===== */
+  .grantedFx{
+    position:relative; text-align:center; padding:24px; border-radius:14px;
+    background:
+      radial-gradient(800px 300px at 50% -20%, rgba(0,255,156,.20), transparent 60%),
+      linear-gradient(180deg,#0a2c2b,#061c1e);
+    border:2px solid rgba(0,255,156,.35);
+  }
+  .grantedFx h2{
+    font-family:Orbitron; font-size:28px; letter-spacing:2px; color:#00ff9c;
+    text-shadow:0 0 18px rgba(0,255,156,.45);
+    margin:0 0 8px;
+  }
+  .scan{position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,rgba(0,255,156,.8),transparent); animation:scan 1.6s linear infinite}
+  .scan.top{top:10%} .scan.mid{top:50%} .scan.bot{top:85%}
+  @keyframes scan{ from{transform:translateX(-100%)} to{ transform:translateX(100%)} }
+  .ring{
+    position:absolute; inset: -8px; border-radius:16px; pointer-events:none;
+    box-shadow:0 0 40px rgba(0,255,156,.35), inset 0 0 40px rgba(0,255,156,.15);
+    animation:ring 1.8s ease-in-out infinite;
+  }
+  @keyframes ring{ 50%{ box-shadow:0 0 64px rgba(0,255,156,.45), inset 0 0 64px rgba(0,255,156,.25);} }
+
+  /* ===== One-Screen Manual (mobile friendly) ===== */
+  .manualFx{
+    position:relative; text-align:center; padding:clamp(16px,4vw,28px); border-radius:14px;
+    background:
+      radial-gradient(800px 300px at 50% -20%, rgba(33,177,255,.20), transparent 60%),
+      linear-gradient(180deg,#0a1d33,#071426);
+    border:2px solid rgba(33,177,255,.35);
+    box-shadow:0 20px 80px rgba(33,177,255,.2), inset 0 0 40px rgba(33,177,255,.15);
+  }
+  .manualFx h2{
+    font-family:Orbitron;
+    font-size:clamp(20px,6vw,28px);
+    letter-spacing:1.5px; color:#cfefff;
+    text-shadow:0 0 18px rgba(33,177,255,.35);
+    margin:0 0 8px;
+  }
+  .manualFx .sub{
+    color:#bfe8ff; font-weight:700; font-size:clamp(12px,3.8vw,15px);
+  }
+
+  /* ===== Self-Destruction ===== */
+  .destructFx{
+    position:relative; text-align:center; padding:28px; border-radius:14px;
+    background:
+      repeating-linear-gradient(135deg, rgba(255,212,0,.12) 0 12px, rgba(0,0,0,.18) 12px 24px),
+      radial-gradient(900px 340px at 50% -15%, rgba(255,212,0,.28), transparent 60%),
+      linear-gradient(180deg,#2a2100,#1a1400);
+    border:2px solid rgba(255,212,0,.45);
+    box-shadow:0 20px 80px rgba(255,212,0,.25), inset 0 0 40px rgba(255,212,0,.2);
+  }
+  .destructFx h2{
+    font-family:Orbitron; font-size:30px; letter-spacing:2px; color:#ffe76a;
+    text-shadow:0 0 22px rgba(255,212,0,.6);
+    margin:0 0 8px;
+  }
+  .destructFx .sub{ color:#ffeaa1; font-weight:700 }
+  .descan{position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,rgba(255,212,0,.85),transparent); animation:scan 1.5s linear infinite}
+  .descan.top{top:12%} .descan.mid{top:50%} .descan.bot{top:88%}
+
+  body.broken .panel{ filter:grayscale(1) contrast(.85) brightness(.8) }
+  body.broken .btn, body.broken .toggle button, body.broken .pill{ pointer-events:none; opacity:.55 }
+  body.broken .marquee span{ color:#bbb; text-shadow:none; }
+  body.broken .marquee span{ animation:none }
+
+  .step-banner{
+    font-family:Orbitron;font-weight:900;letter-spacing:1px;text-align:center;
+    padding:16px;border-radius:12px;
+    color:#b9ffe3;
+    background:
+      radial-gradient(600px 220px at 50% -10%, rgba(0,255,156,.18), transparent 60%),
+      linear-gradient(180deg,#0a2c2b,#061c1e);
+    border:2px solid rgba(0,255,156,.35);
+    text-shadow:0 0 12px rgba(0,255,156,.45);
+  }
+
+  .toast{position:fixed;left:50%;top:20px;transform:translateX(-50%);background:linear-gradient(180deg,#10214a,#0c1636);padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);display:none;z-index:120}
+  .toast.show{display:block}
+
+  .ms-overlay{
+    position:fixed;top:0;left:0;right:0;height:56px;z-index:82;
+    display:none;align-items:center;gap:10px;padding:0 14px;
+    color:#eaf6ff;font-weight:800;letter-spacing:.4px;
+    background:linear-gradient(180deg,rgba(0,120,215,.85),rgba(0,120,215,.65));
+    border-bottom:1px solid rgba(255,255,255,.25);
+    backdrop-filter:blur(6px);
+    pointer-events:none;
+  }
+  .ms-overlay.show{display:flex}
+  .ms-logo{
+    width:18px;height:18px;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px
+  }
+  .ms-logo span{display:block;background:#eaf6ff;opacity:.9}
+
+  /* ===== Keypad console (restored + mobile friendly) ===== */
+  .kp-shell{
+    position:relative;border-radius:14px;padding:12px;
+    background:
+      linear-gradient(180deg, rgba(8,14,36,.72), rgba(8,14,36,.72)),
+      url('https://wallpapers.com/images/hd/1920x1080-hd-coding-uxxijj0oa4s9xh25.jpg');
+    background-size:cover;background-position:center;
+    border:1px solid rgba(58,209,255,.28);
+    box-shadow:0 10px 30px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);
+  }
+  .kp-header{display:flex;align-items:center;justify-content:space-between;padding:8px 6px;border-bottom:1px solid rgba(255,255,255,.06)}
+  .kp-title{font-family:Orbitron;letter-spacing:1px;background:rgba(0,0,0,.35);padding:6px 10px;border-radius:8px}
+  .kp-lights{display:flex;gap:8px}
+  .kp-dot{width:10px;height:10px;border-radius:50%}
+  .kp-dot.r{background:#ff4d6d;box-shadow:0 0 8px #ff4d6d}
+  .kp-dot.y{background:#ffd400;box-shadow:0 0 8px #ffd400}
+  .kp-dot.g{background:#39ff86;box-shadow:0 0 8px #39ff86}
+
+  .kp-display{
+    height:52px;border-radius:10px;border:1px solid rgba(255,255,255,.08);
+    background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
+    display:flex;align-items:center;padding:8px 10px;gap:8px;margin-top:10px
+  }
+  .kp-display strong{font-family:Orbitron}
+  .kp-out{font-family:Orbitron,monospace;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:18px}
+  .kp-display.shake{animation:kpShake .28s}
+  @keyframes kpShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
+
+  .kp-help{
+    text-align:center;margin-top:10px;margin-bottom:0;
+    color:#9bb5ff;font-weight:800
+  }
+
+  .keypad{
+    display:grid;
+    grid-template-columns:repeat(3, minmax(64px, 1fr));
+    gap:10px;
+    justify-content:center;
+    margin-top:12px
+  }
+  .kp-btn{
+    height:clamp(64px,16vw,88px);
+    min-width:clamp(64px,16vw,88px);
+    border-radius:12px;border:1px solid rgba(255,255,255,.06);
+    background:radial-gradient(120% 140% at 50% 10%,rgba(255,255,255,.10),rgba(255,255,255,.03));
+    color:#eaf3ff;font-weight:900;font-size:24px;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;user-select:none;box-shadow:0 8px 18px rgba(0,0,0,.38)
+  }
+  .kp-btn:active{transform:translateY(1px)}
+  .kp-back{background:linear-gradient(180deg,#172a56,#0b1f40)}
+</style>
+</head>
+<body>
+  <div class="app">
+    <!-- LEFT: main console -->
+    <section class="panel">
+      <div class="sticky-head">
+        <div class="title-row">
+          <div class="leds"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="marquee"><span>NEGATIVITY RAY ACTIVATED — NEGATIVITY RAY ACTIVATED — NEGATIVITY RAY ACTIVATED —</span></div>
+        <div class="timer" aria-live="polite">
+          <div class="time" id="time">04:27:12</div>
+          <div class="status" id="statusText">Charging</div>
+          <div class="cta-center" style="margin-top:8px">
+            <button id="btnEmergency" class="btn btn-emergency" aria-controls="authOverlay">Emergency Self Destruction Button</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="charge" aria-label="Charge status">
+        <div class="charge-top"><span>Charge Status</span><span id="pct">0%</span></div>
+        <div class="bar"><div class="fill" id="fill"></div></div>
+      </div>
+
+      <div class="cta-center" style="margin-top:10px">
+        <button id="btnActivateNow" class="btn btn-activate">Activate Now</button>
+      </div>
+
+      <div class="steps">
+        <h3>Self Destruct Manual</h3>
+        <ol id="stepList" class="step-list">
+          <li class="step" id="st1"><span class="check">✓</span><span class="txt">Enter deactivation password</span></li>
+          <li class="step" id="st2"><span class="check">✓</span><span class="txt">Change Negativity Injector to <strong>GREEN</strong></span></li>
+          <li class="step" id="st3"><span class="check">✓</span><span class="txt">Shut down Main Power Supply</span></li>
+          <li class="step" id="st4"><span class="check">✓</span><span class="txt">Turn off the Negativity Injector</span></li>
+          <li class="step" id="st5"><span class="check">✓</span><span class="txt">Click the Activate Now button</span></li>
+        </ol>
+        <div id="toggleSteps" class="toggle-all">Show all steps</div>
+      </div>
+
+      <div class="log" aria-live="polite" style="margin-top:10px">
+        <h4>Password Attempt Log</h4>
+        <ul id="log"></ul>
+      </div>
+    </section>
+
+    <!-- RIGHT: telemetry -->
+    <aside class="panel right" aria-label="System telemetry">
+      <!-- Injector -->
+      <div class="group" id="injGroup">
+        <h3 style="margin:0 0 8px">Negativity Injector
+          <span id="chipInjector" class="chip locked">Locked</span>
+        </h3>
+
+        <div class="injector">
+          <div class="bars" id="bars" aria-label="Injector activity">
+            <!-- 16 columns -->
+            <div class="barcol"></div><div class="barcol"></div><div class="barcol"></div><div class="barcol"></div>
+            <div class="barcol"></div><div class="barcol"></div><div class="barcol"></div><div class="barcol"></div>
+            <div class="barcol"></div><div class="barcol"></div><div class="barcol"></div><div class="barcol"></div>
+            <div class="barcol"></div><div class="barcol"></div><div class="barcol"></div><div class="barcol"></div>
+          </div>
+          <div class="toggle locked" id="injToggle" style="min-width:92px">
+            <button id="injOn" class="active">On</button>
+            <button id="injOff">Off</button>
+          </div>
+        </div>
+
+        <div class="palette" id="palette">
+          <div class="pill active" data-pal="a">Snark</div>
+          <div class="pill target" data-pal="b">Grump</div>
+          <div class="pill" data-pal="c">Drama</div>
+          <div class="pill" data-pal="d">Eye-Rolls</div>
+        </div>
+
+        <!-- Injector instruction -->
+        <div id="injHint" class="hint" aria-live="polite">
+          Instructions: Click On Each Button To View It&#39;s Levels
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 style="margin:0 0 8px">Systems Readouts</h3>
+        <div class="metrics">
+          <div class="metric"><label>Temperature</label><div class="val" id="mTemp">1480 K</div></div>
+          <div class="metric"><label>System Mode</label><div class="val" id="mCool">Nominal</div></div>
+          <div class="metric"><label>Particle Congregation</label><div class="val" id="mPart">3.2e7</div></div>
+          <div class="metric"><label>Core Flux</label><div class="val" id="mFlux">81.2%</div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;justify-content:center">
+          <img class="aside-gif" alt="reactor visual" src="https://media2.giphy.com/media/v1.Y2lkPTc5MGI3NjExMDdsNzVpdHJid3Jid2t4ZHVxNTA4bXlpvmkycG02ZnJna3VoNHVvZSZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/cMh8QmkbpzpM8NWIRK/giphy.gif" />
+        </div>
+      </div>
+
+      <div class="group">
+        <h3 style="margin:0 0 8px">Main Power Supply
+          <span id="chipPower" class="chip locked">Locked</span>
+        </h3>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div id="lamp" class="lamp pulse" title="Main Power"></div>
+            <div id="powerState">Online</div>
+          </div>
+          <button id="btnPower" class="btn btn-hold" disabled>Shut Down</button>
+        </div>
+        <!-- Power instruction -->
+        <div id="powerHint" class="hint" aria-live="polite" style="margin-top:8px">
+          Instruction: Press and hold <strong>Shut Down</strong> for <strong>2 seconds</strong> to toggle power.
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- Translucent blue “Microsoft-y” ribbon -->
+  <div id="msOverlay" class="ms-overlay" aria-hidden="true">
+    <div class="ms-logo" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+    <div>System Notification: System Notification : Hardware Is No Longer Connected To The Server</div>
+  </div>
+
+  <!-- Remote Uplink Required (keypad) -->
+  <div id="hackOverlay" class="overlay show" aria-hidden="false">
+    <div class="modal" style="max-width:620px;width:min(96vw,620px);margin:auto">
+      <div class="kp-shell">
+        <div class="kp-header">
+          <div class="kp-title">ZURG CORE ACCESS INTERFACE</div>
+          <div class="kp-lights"><span class="kp-dot r"></span><span class="kp-dot y"></span><span class="kp-dot g"></span></div>
+        </div>
+
+        <div class="kp-display" id="kpDisplay" aria-live="polite">
+          <strong class="label">CODE:</strong>
+          <span class="kp-out" id="kpText">&nbsp;</span>
+          <span style="font-size:12px;color:#9bb5ff">Use keypad (includes “–”)</span>
+        </div>
+
+        <div class="kp-help">Enter access code (MM-DD-YYYY). Auto-submits when complete.</div>
+        <div class="keypad" id="keypad"></div>
+
+        <div id="hackMsg" class="hack-help" style="min-height:18px"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Dramatic Access Granted -->
+  <div id="grantedOverlay" class="overlay">
+    <div class="modal" style="max-width:620px;width:min(96vw,620px);margin:auto">
+      <div class="grantedFx">
+        <div class="scan top"></div><div class="scan mid"></div><div class="scan bot"></div>
+        <div class="ring"></div>
+        <h2>ACCESS GRANTED</h2>
+        <div style="color:#b9ffe3">Uplink secured. Routing to control panel…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- One-Screen Manual Prompt -->
+  <div id="manualOverlay" class="overlay">
+    <div class="modal" style="max-width:620px;width:min(96vw,620px);margin:auto">
+      <div class="manualFx">
+        <div class="scan top"></div><div class="scan mid"></div><div class="scan bot"></div>
+        <div class="ring"></div>
+        <h2>FOLLOW THE ONE-SCREEN MANUAL</h2>
+        <div class="sub">Progress through the steps shown. Works great on phones.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Self-Destruction Activated (yellow) -->
+  <div id="destructOverlay" class="overlay">
+    <div class="modal" style="max-width:720px;width:min(96vw,720px);margin:auto">
+      <div class="destructFx">
+        <div class="descan top"></div><div class="descan mid"></div><div class="descan bot"></div>
+        <h2>SELF-DESTRUCTION ACTIVATED</h2>
+        <div class="sub">Containment collapse in progress. Systems falling silent…</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Authorization -->
+  <div id="authOverlay" class="overlay" role="dialog" aria-modal="true">
+    <div class="modal" style="max-width:520px;width:min(96vw,520px);margin:auto">
+      <h2>Authorization Required</h2>
+      <p>Only agents with clearance may proceed</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input id="authInput" class="the-input" placeholder="Enter password" style="flex:1;min-width:200px;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);color:#e9f2ff" />
+        <button id="authSubmit" class="btn btn-emergency">Submit</button>
+      </div>
+      <div id="authMsg" class="hack-help" style="text-align:left"></div>
+    </div>
+  </div>
+
+  <!-- kept (unused) -->
+  <div id="stepOverlay" class="overlay">
+    <div class="modal" style="max-width:520px;width:min(96vw,520px);margin:auto">
+      <div class="step-banner">Step One Complete: Please Refer To Online Manual to Confirm Self-Destruct Sequence</div>
+    </div>
+  </div>
+
+  <!-- confetti + toast -->
+  <div id="confetti" style="position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:120"></div>
+  <canvas id="confettiCanvas" style="position:fixed;inset:0;pointer-events:none;display:none;z-index:121"></canvas>
+  <div id="toast" class="toast"></div>
+
+  <!-- SFX -->
+  <audio id="sfxAccept" src="https://actions.google.com/sounds/v1/transportation/credit_card_swipe.ogg" preload="auto"></audio>
+  <audio id="sfxBoom"   src="https://actions.google.com/sounds/v1/weapons/big_explosion_cut_off.ogg" preload="auto"></audio>
+
+<script>
+(function(){
+  const fmt = n => String(n).padStart(2,'0');
+  const initialTotal = 4*3600 + 27*60 + 12;
+  const progressTotal = initialTotal;
+  let totalSeconds = initialTotal;
+  let remaining = totalSeconds;
+  let ticking = false, tickHandle = null;
+  let destroyed = false;
+
+  let stepOne = false;
+  let injectorLocked = true;
+  let injectorOn = true;
+  let currentPalette = 'a';
+  let powerOn = true;
+  let courtesyUses = 0;
+  let lockoutUntil = 0;
+
+  // UI refs
+  const timeEl = document.getElementById('time');
+  const statusEl = document.getElementById('statusText');
+  const pctEl = document.getElementById('pct');
+  const fillEl = document.getElementById('fill');
+
+  const btnActivate = document.getElementById('btnActivateNow');
+  const btnEmergency = document.getElementById('btnEmergency');
+  const logEl = document.getElementById('log');
+
+  const barsWrap = document.getElementById('bars');
+  const barCols = Array.from(barsWrap.querySelectorAll('.barcol'));
+  const injToggle = document.getElementById('injToggle');
+  const injOnBtn = document.getElementById('injOn');
+  const injOffBtn = document.getElementById('injOff');
+
+  const lamp = document.getElementById('lamp');
+  const powerState = document.getElementById('powerState');
+  const btnPower = document.getElementById('btnPower');
+
+  const chipInjector = document.getElementById('chipInjector');
+  const chipPower = document.getElementById('chipPower');
+  const marqueeSpan = document.querySelector('.marquee span');
+
+  // overlays / sfx
+  const destructOverlay = document.getElementById('destructOverlay');
+  const authOverlay = document.getElementById('authOverlay');
+  const stepOverlay = document.getElementById('stepOverlay'); // legacy
+  const manualOverlay = document.getElementById('manualOverlay');
+  const hackOverlay = document.getElementById('hackOverlay');
+  const grantedOverlay = document.getElementById('grantedOverlay');
+  const msOverlay = document.getElementById('msOverlay');
+
+  const sfxAccept = document.getElementById('sfxAccept');
+  const sfxBoom   = document.getElementById('sfxBoom');
+
+  // manual steps
+  const steps = [
+    { el: document.getElementById('st1'), done: () => stepOne },
+    { el: document.getElementById('st2'), done: () => stepOne && currentPalette === 'b' },
+    { el: document.getElementById('st3'), done: () => stepOne && currentPalette === 'b' && !powerOn },
+    { el: document.getElementById('st4'), done: () => stepOne && currentPalette === 'b' && !powerOn && !injectorOn },
+    { el: document.getElementById('st5'), done: () => stepOne && currentPalette === 'b' && !powerOn && !injectorOn }
+  ];
+  const toggleSteps = document.getElementById('toggleSteps');
+  let showAllSteps = false;
+
+  function renderSteps(){
+    steps.forEach((s)=>{
+      const isDone = s.done();
+      s.el.classList.toggle('done', isDone);
+      if (!showAllSteps){
+        const firstNeeded = steps.find(st => !st.done());
+        s.el.style.display = (firstNeeded && firstNeeded.el === s.el) || isDone ? 'flex' : 'none';
+      } else {
+        s.el.style.display = 'flex';
+      }
+    });
+    toggleSteps.textContent = showAllSteps ? 'Show next step only' : 'Show all steps';
+  }
+  toggleSteps.addEventListener('click', ()=>{ showAllSteps = !showAllSteps; renderSteps(); });
+
+  function logAttempt(text){
+    const ts = new Date().toLocaleTimeString([], {hour12:false});
+    const li = document.createElement('li');
+    li.textContent = '[' + ts + '] ' + text;
+    logEl.prepend(li);
+  }
+
+  function showToast(text){
+    const toast = document.getElementById('toast');
+    toast.textContent = text; toast.classList.add('show');
+    setTimeout(()=>toast.classList.remove('show'), 1800);
+  }
+
+  const ping = () => { try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){} if (navigator.vibrate) navigator.vibrate(25); };
+
+  function fmtTime(sec){
+    sec = Math.max(0, Math.floor(sec));
+    const h = Math.floor(sec/3600);
+    const m = Math.floor((sec%3600)/60);
+    const s = sec%60;
+    return fmt(h)+':'+fmt(m)+':'+fmt(s);
+  }
+
+  function updateTimerUI(){
+    timeEl.textContent = fmtTime(remaining);
+    const denom = progressTotal || 1;
+    const elapsed = Math.max(0, Math.min(denom, denom - remaining));
+    const pctElapsed = Math.round((elapsed / denom) * 100);
+    pctEl.textContent = pctElapsed + '%';
+    fillEl.style.width = pctElapsed + '%';
+    if (remaining <= 240) statusEl.textContent = 'Imminent';
+    else statusEl.textContent = pctElapsed >= 75 ? 'Charging Nearing Completion' : 'Charging';
+  }
+
+  function startTick(){
+    if (ticking) return;
+    ticking = true;
+    tickHandle = setInterval(()=>{
+      if (remaining > 0){
+        remaining -= 1;
+        updateTimerUI();
+        if (remaining <= 0){ remaining = 0; updateTimerUI(); }
+      }
+    }, 1000);
+  }
+  function stopTick(){ ticking = false; if (tickHandle){ clearInterval(tickHandle); tickHandle = null; } }
+
+  // telemetry jitter
+  const mTemp = document.getElementById('mTemp');
+  const mCool = document.getElementById('mCool');
+  const mPart = document.getElementById('mPart');
+  const mFlux = document.getElementById('mFlux');
+
+  let temp = 1480, part = 3.2e7, flux = 81.2;
+  function jitterMetric(el, value, mutator){
+    if (destroyed) return value;
+    const prev = value; value = mutator(value);
+    if (el === mTemp) el.textContent = Math.round(value) + ' K';
+    else if (el === mPart) el.textContent = Number(value).toExponential(1);
+    else el.textContent = value.toFixed(1) + '%';
+    el.classList.remove('up','down');
+    if (value > prev) el.classList.add('up'); if (value < prev) el.classList.add('down');
+    setTimeout(()=>el.classList.remove('up','down'), 300);
+    return value;
+  }
+  setInterval(()=>{ temp = jitterMetric(mTemp,temp,v=>v+(Math.random()*4-2)); }, 1400);
+  setInterval(()=>{ if(!destroyed){ const r=Math.random(); mCool.textContent = r>0.96?'Overdrive': r>0.88?'Active':'Nominal'; } }, 1700);
+  setInterval(()=>{ part = jitterMetric(mPart,part,v=>v+(Math.random()*1.2e5-6e4)); }, 1600);
+  setInterval(()=>{ flux = jitterMetric(mFlux,flux,v=>Math.max(0,Math.min(100,v+(Math.random()*1.4-0.7)))); }, 1500);
+
+  function animateBars(){ if (injectorOn){ barCols.forEach(b=>{ b.style.height = (10 + Math.random()*88) + '%'; }); } }
+  setInterval(animateBars, 380);
+
+  function setPowerLamp(){
+    lamp.classList.toggle('pulse', powerOn);
+    lamp.classList.toggle('off', !powerOn);
+    powerState.textContent = powerOn ? 'Online' : 'Offline';
+    btnPower.textContent = powerOn ? 'Shut Down' : 'Power On';
+  }
+
+  function updateInjHint(){
+    if (!stepOne){
+      injHint.innerHTML = 'Instructions: Click On Each Button To View It&#39;s Levels';
+    } else if (currentPalette !== 'b'){
+      injHint.innerHTML = 'Instruction: Tap <strong>Grump</strong> to set the Injector to <strong>GREEN</strong>.';
+    } else if (powerOn){
+      injHint.innerHTML = 'Instruction: Palette set. Now <strong>Press and hold Shut Down</strong> for 2 seconds.';
+    } else if (injectorOn){
+      injHint.innerHTML = 'Instruction: With power off, switch the Negativity Injector <strong>Off</strong>.';
+    } else {
+      injHint.innerHTML = 'Instruction: Press <strong>Activate Now</strong> to complete the sequence.';
+    }
+  }
+
+  function updatePowerHint(){
+    if (!stepOne){
+      powerHint.innerHTML = 'Instruction: Complete <strong>Step One</strong> to unlock power control.';
+    } else if (powerOn){
+      powerHint.innerHTML = 'Instruction: Press and hold <strong>Shut Down</strong> for <strong>2 seconds</strong> to toggle power.';
+    } else {
+      powerHint.innerHTML = 'Instruction: Press and hold <strong>Power On</strong> for <strong>2 seconds</strong> to restore power.';
+    }
+  }
+
+  function setBtnActivateState(){
+    const ok = stepOne && currentPalette==='b' && !powerOn && !injectorOn;
+    btnActivate.classList.toggle('enabled', ok);
+    btnActivate.classList.toggle('attention', ok);
+    btnActivate.style.display = ok ? 'inline-flex' : 'none';
+
+    chipInjector.textContent = injectorLocked ? 'Locked' : (injectorOn ? 'Online' : 'Off');
+    chipInjector.className = 'chip ' + (injectorLocked ? 'locked' : (injectorOn ? 'online' : 'offline'));
+    chipPower.textContent = powerOn ? 'Locked' : 'Offline';
+    chipPower.className = 'chip ' + (powerOn ? 'locked' : 'offline');
+
+    btnPower.disabled = !stepOne || destroyed;
+
+    document.getElementById('injGroup').classList.toggle('injector-warning', injectorOn);
+    injToggle.classList.toggle('toggleGlow', injectorOn);
+
+    updateInjHint();
+    updatePowerHint();
+    renderSteps();
+  }
+
+  // Palette switching (PREVIEW always allowed)
+  const palette = document.getElementById('palette');
+  const injHint = document.getElementById('injHint');
+  const powerHint = document.getElementById('powerHint');
+
+  function setPalette(which){
+    if (destroyed) return;
+    currentPalette = which;
+    palette.querySelectorAll('.pill').forEach(p=>p.classList.toggle('active', p.dataset.pal===which));
+    let a1='--inj-a1', a2='--inj-a2';
+    if (which==='b'){ a1='--inj-b1'; a2='--inj-b2'; }
+    if (which==='c'){ a1='--inj-c1'; a2='--inj-c2'; }
+    if (which==='d'){ a1='--inj-d1'; a2='--inj-d2'; }
+    const c1 = getComputedStyle(document.documentElement).getPropertyValue(a1);
+    const c2 = getComputedStyle(document.documentElement).getPropertyValue(a2);
+    barCols.forEach(b=> b.style.background = `linear-gradient(180deg,${c1},${c2})`);
+    ping();
+    setBtnActivateState();
+  }
+  palette.addEventListener('click', e=>{
+    const pill = e.target.closest('.pill'); if(!pill) return;
+    setPalette(pill.dataset.pal);
+    if (injectorLocked) showToast('Preview only — complete Step One to unlock controls.');
+  });
+
+  // Activate Now — deactivation when ready
+  btnActivate.addEventListener('click', ()=>{
+    if (!stepOne){ showToast('Reading is fundamental — complete Step One first.'); return; }
+    if (currentPalette!=='b'){ showToast('Reading is fundamental — switch Injector to GREEN.'); return; }
+    if (powerOn){ showToast('Reading is fundamental — shut down Main Power first.'); return; }
+    if (injectorOn){ showToast('Reading is fundamental — turn OFF the Negativity Injector.'); return; }
+
+    stopTick();
+    try { if (sfxBoom) { sfxBoom.currentTime = 0; sfxBoom.play(); } } catch(e){}
+
+    const startPct = parseInt(pctEl.textContent, 10) || 0;
+    let cur = startPct;
+    const drain = setInterval(()=>{
+      cur -= 5; if (cur <= 0){ cur = 0; clearInterval(drain); }
+      pctEl.textContent = cur + '%'; fillEl.style.width = cur + '%';
+    }, 60);
+
+    statusEl.textContent = 'Deactivation In Progress';
+    destroyed = true;
+    mCool.textContent = 'ERROR'; mTemp.textContent = 'ERR'; mPart.textContent = 'ERR'; mFlux.textContent = 'ERR';
+    const reactorImg = document.querySelector('.aside-gif');
+    if (reactorImg) reactorImg.classList.add('fade');
+
+    setTimeout(()=>{
+      try { if (sfxBoom) { sfxBoom.currentTime = 0; sfxBoom.play(); } } catch(e){}
+      document.getElementById('destructOverlay').classList.add('show');
+    }, 150);
+
+    setTimeout(()=>{
+      document.getElementById('destructOverlay').classList.remove('show');
+      document.body.classList.add('broken');
+      if (marqueeSpan){
+        marqueeSpan.textContent = 'NEGATIVITY RAY DESTROYED — REACTOR OFFLINE — DAMAGE REPORT: EXTENSIVE —';
+      }
+      injToggle.classList.add('locked');
+      btnPower.disabled = true;
+      btnActivate.style.display = 'none';
+      launchCanvasConfetti();
+      statusEl.textContent = 'Deactivated';
+      setTimeout(()=>{ msOverlay.classList.add('show'); }, 1800);
+    }, 1600);
+  });
+
+  // ===== Authorization (unlock + manual overlay) =====
+  const authInput = document.getElementById('authInput');
+  const authSubmit = document.getElementById('authSubmit');
+  const authMsg = document.getElementById('authMsg');
+  function finishClose(delay=2200){ setTimeout(()=>authOverlay.classList.remove('show'), delay); }
+
+  function handleAuthEntry(){
+    if (destroyed) { authOverlay.classList.remove('show'); return; }
+    const raw = authInput.value.trim();
+    const entry = raw.toLowerCase();
+    authInput.value = '';
+
+    const now = Date.now();
+    if (now < lockoutUntil){
+      const secs = Math.max(0, Math.ceil((lockoutUntil - now)/1000));
+      authMsg.textContent = 'Locked out, wait ' + secs + 's'; finishClose(); return;
+    }
+
+    if (entry === '5818'){
+      authMsg.textContent = 'Admin mode unlocked';
+      const mins = prompt('Admin, enter minutes like "25" or "+10" or "1:30"');
+      if (mins){
+        const add = parseTimeSpec(mins);
+        if (add){
+          if (add.mode === 'add'){ remaining += add.secs; totalSeconds += add.secs; }
+          else { remaining = add.secs; totalSeconds = Math.max(add.secs, 1); }
+          updateTimerUI(); showToast(add.mode==='add' ? 'Time added' : 'Time set');
+        } else showToast('Invalid time format');
+      }
+      finishClose(); return;
+    }
+
+    if (entry === 'kindness'){
+      if (!stepOne){
+        stepOne = true; injectorLocked = false;
+        injToggle.classList.remove('locked');
+        injToggle.classList.add('flash-green');
+        setTimeout(()=>injToggle.classList.remove('flash-green'), 700);
+
+        authMsg.textContent = 'Step One complete — injector controls unlocked';
+        try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){}
+        if (navigator.vibrate) navigator.vibrate(40);
+
+        // Manual overlay
+        manualOverlay.classList.add('show');
+        setTimeout(()=>manualOverlay.classList.remove('show'), 3200);
+
+        setBtnActivateState();
+
+        if (btnEmergency) btnEmergency.style.display = 'none';
+      } else {
+        authMsg.textContent = 'Step One already completed';
+      }
+      logAttempt('*** step one authorization accepted ***');
+      finishClose(); return;
+    }
+
+    if (entry === 'audria' || entry === 'audira'){ authMsg.textContent = 'Aww you think you are important'; logAttempt('attempt "'+raw+'"'); finishClose(); return; }
+    if (entry === 'password'){ authMsg.textContent = 'No, enter the correct password, not the word Password, this is going in your file'; logAttempt('attempt "'+raw+'"'); finishClose(); return; }
+
+    if (entry.includes('please') || entry.includes('sorry')){
+      if (courtesyUses < 3){
+        courtesyUses += 1; remaining += 25; totalSeconds += 25; updateTimerUI();
+        authMsg.textContent = '+25 seconds added, credit ' + courtesyUses + ' of 3'; showToast('+25 seconds added');
+      } else {
+        lockoutUntil = Date.now() + 5000;
+        let t = 5;
+        const int = setInterval(()=>{ t -= 1; authMsg.textContent = 'Locked out, wait ' + Math.max(0,t) + 's'; if (t<=0){ clearInterval(int); authMsg.textContent=''; } }, 1000);
+      }
+      logAttempt('attempt "'+raw+'"'); finishClose(); return;
+    }
+
+    const negatives = [
+      'Minion, that is not even close',
+      'Try again, but use the brain this time',
+      'Incorrect, report to reeducation later',
+      'Denied, you are embarrassing the empire',
+      'Wrong code, check the manual you never read',
+      'Password failure, this will be noted in your file'
+    ];
+    authMsg.textContent = negatives[Math.floor(Math.random()*negatives.length)];
+    logAttempt('attempt "'+raw+'"'); finishClose();
+  }
+  authSubmit.addEventListener('click', handleAuthEntry);
+
+  if (btnEmergency){
+    btnEmergency.addEventListener('click', ()=>{
+      if (destroyed) return;
+      authOverlay.classList.add('show');
+      authMsg.textContent = ''; authInput.value = '';
+      setTimeout(()=>authInput.focus(), 30);
+    });
+  }
+
+  // ===== Injector control buttons =====
+  injOnBtn.addEventListener('click', ()=>{
+    if (injectorLocked || destroyed) return;
+    injectorOn = true;
+    injOnBtn.classList.add('active'); injOffBtn.classList.remove('active');
+    barsWrap.style.filter = '';
+    try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){}
+    setBtnActivateState();
+  });
+  injOffBtn.addEventListener('click', ()=>{
+    if (injectorLocked || destroyed) return;
+    if (powerOn){ showToast('Turn off Main Power first.'); return; }
+    if (currentPalette!=='b'){ showToast('Switch Injector to GREEN first.'); return; }
+    injectorOn = false;
+    injOffBtn.classList.add('active'); injOnBtn.classList.remove('active');
+    barCols.forEach(b=>b.style.height='0%'); barsWrap.style.filter='grayscale(.75) brightness(.7)';
+    try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){}
+    setBtnActivateState();
+  });
+
+  // ===== HOLD-TO-TOGGLE for Main Power (2 seconds) =====
+  const HOLD_MS = 2000;
+  let holdInterval = null;
+  let holdStart = 0;
+  let holdSucceeded = false;
+
+  function startHold(e){
+    if (!stepOne || destroyed || btnPower.disabled) return;
+    if (e.type === 'touchstart') e.preventDefault();
+
+    holdSucceeded = false;
+    holdStart = Date.now();
+    btnPower.style.setProperty('--hold', '0%');
+
+    clearInterval(holdInterval);
+    holdInterval = setInterval(()=>{
+      const dt = Date.now() - holdStart;
+      const pct = Math.min(100, Math.round(dt / HOLD_MS * 100));
+      btnPower.style.setProperty('--hold', pct + '%');
+      if (dt >= HOLD_MS){
+        clearInterval(holdInterval);
+        holdSucceeded = true;
+        togglePower();
+        setTimeout(()=>btnPower.style.removeProperty('--hold'), 150);
+      }
+    }, 50);
+  }
+  function cancelHold(){
+    clearInterval(holdInterval);
+    if (!holdSucceeded){
+      btnPower.style.removeProperty('--hold');
+      showToast('Hold for 2 seconds to toggle power');
+    }
+  }
+  function togglePower(){
+    powerOn = !powerOn;
+    setPowerLamp();
+    try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){}
+    updatePowerHint();
+    setBtnActivateState();
+  }
+
+  // Mouse events
+  btnPower.addEventListener('mousedown', startHold);
+  btnPower.addEventListener('mouseup', cancelHold);
+  btnPower.addEventListener('mouseleave', cancelHold);
+  // Touch events
+  btnPower.addEventListener('touchstart', startHold, {passive:false});
+  btnPower.addEventListener('touchend', cancelHold);
+  btnPower.addEventListener('touchcancel', cancelHold);
+
+  // ===== Helpers =====
+  function parseTimeSpec(spec){
+    spec = (spec||'').trim(); if (!spec) return null;
+    if (spec.startsWith('+')){
+      const s = spec.slice(1).trim();
+      if (/^\d+$/.test(s)) return {mode:'add', secs: Number(s)*60};
+      const p = s.split(':').map(Number);
+      if (p.length===2 && p.every(n=>!Number.isNaN(n))) return {mode:'add', secs:p[0]*60+p[1]};
+      if (p.length===3 && p.every(n=>!Number.isNaN(n))) return {mode:'add', secs:p[0]*3600+p[1]*60+p[2]};
+      return null;
+    }
+    if (/^\d+$/.test(spec)) return {mode:'set', secs:Number(spec)*60};
+    const parts = spec.split(':').map(Number);
+    if (parts.length===2 && parts.every(n=>!Number.isNaN(n))) return {mode:'set', secs:parts[0]*60+parts[1]};
+    if (parts.length===3 && parts.every(n=>!Number.isNaN(n))) return {mode:'set', secs:parts[0]*3600+parts[1]*60+parts[2]};
+    return null;
+  }
+
+  function launchCanvasConfetti(){
+    const canvas = document.getElementById('confettiCanvas');
+    const ctx = canvas.getContext('2d');
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    const resize = ()=>{
+      canvas.style.display = 'block';
+      canvas.width = Math.floor(innerWidth * dpr);
+      canvas.height = Math.floor(innerHeight * dpr);
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    };
+    resize();
+    const N = 140;
+    const parts = Array.from({length:N}, ()=>({
+      x: Math.random()*innerWidth,
+      y: -20 - Math.random()*60,
+      vx: (Math.random()*2-1)*1.2,
+      vy: 2+Math.random()*3.5,
+      size: 4+Math.random()*6,
+      rot: Math.random()*Math.PI*2,
+      vr: (Math.random()-.5)*0.2,
+      color: Math.random()<.33? '#ffd400' : Math.random()<.5? '#21b1ff' : '#9b5cff'
+    }));
+    let t=0;
+    function step(){
+      ctx.clearRect(0,0,innerWidth,innerHeight);
+      parts.forEach(p=>{
+        p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+        ctx.save();
+        ctx.translate(p.x,p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle=p.color;
+        ctx.fillRect(-p.size/2,-p.size/2,p.size,p.size);
+        ctx.restore();
+      });
+      t+=16;
+      if (t<1600) requestAnimationFrame(step);
+      else { canvas.style.display='none'; }
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ===== Keypad =====
+  const keypad = document.getElementById('keypad');
+  const kpText = document.getElementById('kpText');
+  const kpDisplay = document.getElementById('kpDisplay');
+  let kpValue = '';
+  let digitOrder = ['1','2','3','4','5','6','7','8','9','0'];
+
+  function updateKpDisplay(){ kpText.style.fontSize='18px'; kpText.textContent = kpValue || '\u00a0'; }
+  function buzz(){ kpDisplay.classList.add('shake'); setTimeout(()=>kpDisplay.classList.remove('shake'), 260); }
+  function rotateDigits(){ digitOrder.unshift(digitOrder.pop()); renderKeypad(); }
+  function appendDash(){
+    if (kpValue.length < 10){
+      kpValue += '-'; updateKpDisplay(); autoSubmitIfComplete();
+    } else buzz();
+  }
+  function handleDigitPress(ch){
+    if (!/^\d$/.test(ch)) return;
+    if (kpValue.length >= 10) { buzz(); return; }
+    kpValue += ch;
+    kpText.style.fontSize='20px';
+    updateKpDisplay();
+    rotateDigits();
+    autoSubmitIfComplete();
+  }
+  function backspace(){ kpValue = kpValue.slice(0,-1); updateKpDisplay(); }
+
+  function renderKeypad(){
+    keypad.innerHTML = '';
+    const cells = [...digitOrder];
+    const grid = [
+      cells[0], cells[1], cells[2],
+      cells[3], cells[4], cells[5],
+      cells[6], cells[7], cells[8],
+      '0', '-', 'BACK'
+    ];
+    grid.forEach(val=>{
+      const b = document.createElement('div');
+      b.className = 'kp-btn' + (val==='BACK' ? ' kp-back' : '');
+      b.textContent = (val==='BACK') ? '←' : val;
+      b.dataset.key = val;
+      keypad.appendChild(b);
+    });
+  }
+
+  keypad.addEventListener('click', e=>{
+    const btn = e.target.closest('.kp-btn'); if (!btn) return;
+    const key = btn.dataset.key;
+    if (key === 'BACK'){ backspace(); return; }
+    if (key === '-') { appendDash(); return; }
+    handleDigitPress(key);
+  });
+
+  document.addEventListener('keydown', e=>{
+    if (!hackOverlay.classList.contains('show')) return;
+    const k = e.key;
+    if (/^\d$/.test(k)) { handleDigitPress(k); e.preventDefault(); }
+    else if (k === 'Backspace') { backspace(); e.preventDefault(); }
+    else if (k === '-') { appendDash(); e.preventDefault(); }
+    else if (k === 'Enter') { trySubmit(); }
+  });
+
+  function autoSubmitIfComplete(){
+    if (kpValue.length === 10 && /^\d{2}-\d{2}-\d{4}$/.test(kpValue)) { trySubmit(); }
+  }
+  function trySubmit(){
+    const v = kpValue.trim();
+    if (!v) return;
+    if (v === '12-21-2015'){
+      hackMsg('Access code accepted', true);
+      try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){}
+      if (navigator.vibrate) navigator.vibrate(40);
+      setTimeout(()=>{ grantedOverlay.classList.add('show'); }, 200);
+      setTimeout(()=>{
+        grantedOverlay.classList.remove('show');
+        hackOverlay.classList.remove('show');
+        startTick();
+      }, 1400);
+    } else {
+      hackMsg('Access denied', false); buzz();
+    }
+    logAttempt('uplink attempt "' + v + '"');
+    kpValue = ''; updateKpDisplay();
+  }
+  function hackMsg(text, ok){
+    const el = document.getElementById('hackMsg');
+    el.style.color = ok ? '#00ff9c' : '#ff5570';
+    el.textContent = text;
+  }
+
+  // init
+  function init(){
+    renderKeypad();
+    updateKpDisplay();
+    updateTimerUI();
+    setPowerLamp();
+    btnPower.disabled = true; // until Step One
+    setPalette('a'); // default until user picks GREEN
+    setBtnActivateState();
+    renderSteps();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
