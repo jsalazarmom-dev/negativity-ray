@@ -796,7 +796,7 @@
   const authInput = document.getElementById('authInput');
   const authSubmit = document.getElementById('authSubmit');
   const authMsg = document.getElementById('authMsg');
-  function finishClose(delay=2200){ setTimeout(()=>authOverlay.classList.remove('show'), delay); }
+  function finishClose(delay=4200){ setTimeout(()=>authOverlay.classList.remove('show'), delay); }
 
   function handleAuthEntry(){
     if (destroyed) { authOverlay.classList.remove('show'); return; }
@@ -837,7 +837,7 @@
 
         // Manual overlay
         manualOverlay.classList.add('show');
-        setTimeout(()=>manualOverlay.classList.remove('show'), 3200);
+        setTimeout(()=>manualOverlay.classList.remove('show'), 4200);
 
         setBtnActivateState();
 
