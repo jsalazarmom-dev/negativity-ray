@@ -1,13 +1,3 @@
-Absolutely—here’s a fully responsive version:
-
-* Right column stacks under the main panel on tablets/phones.
-* Keypad auto-fits any screen (desktop, iPad, phone). Keys expand to fill width with square buttons.
-* Kept the “Activate Now” button at +12%.
-* The changing instructions under the Injector / Power remain removed.
-
-Paste this whole file:
-
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -43,19 +33,7 @@ Paste this whole file:
     overflow:auto;
   }
 
-  .app{
-    min-height:100vh;
-    display:grid;
-    grid-template-columns:1.25fr .75fr;
-    gap:16px;
-    padding:16px;
-  }
-
-  /* ===== Responsive layout ===== */
-  @media (max-width: 1100px){
-    .app{ grid-template-columns: 1fr; }
-  }
-
+  .app{min-height:100vh;display:grid;grid-template-columns:1.25fr .75fr;gap:16px;padding:16px}
   .panel{
     position:relative;border-radius:14px;padding:14px;
     background:linear-gradient(180deg,rgba(20,32,72,.92),rgba(10,18,46,.92));
@@ -104,10 +82,6 @@ Paste this whole file:
     color:var(--neon-blue);text-shadow:0 0 14px rgba(33,177,255,.35)}
   .status{font-size:13px;color:var(--muted);text-transform:uppercase}
 
-  @media (max-width: 520px){
-    .time{ font-size:12vw; }
-  }
-
   .cta-center{display:flex;justify-content:center}
   .btn{border:none;border-radius:12px;padding:10px 14px;font-weight:900;cursor:pointer;position:relative;overflow:hidden}
   .btn-emergency{background:linear-gradient(180deg,#ff3b62,#c21339);color:#fff;border:1px solid rgba(255,255,255,.06);
@@ -117,7 +91,7 @@ Paste this whole file:
     background:repeating-linear-gradient(135deg,var(--stripe) 0 12px,var(--stripe2) 12px 24px);
     color:#0a0f1c;border:2px solid #0a0f1c;border-radius:10px;
     padding:14px 22px;
-    font-weight:900; transform:scale(1.12); /* +12% */
+    font-weight:900; transform:scale(1.12); /* 12% bigger */
     box-shadow:0 10px 28px rgba(255,255,255,.08);
     display:none;
   }
@@ -202,7 +176,7 @@ Paste this whole file:
 
   .overlay{position:fixed;inset:0;background:rgba(3,8,20,.92);display:none;place-items:center;z-index:80;padding:16px;overflow:auto}
   .overlay.show{display:grid}
-  .modal{background:linear-gradient(180deg,#101b44,#0c1538);padding:clamp(12px,2vw,14px);border-radius:14px;border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 80px rgba(2,6,16,.85);max-width:980px;width:min(96vw,980px)}
+  .modal{background:linear-gradient(180deg,#101b44,#0c1538);padding:14px;border-radius:14px;border:1px solid rgba(255,255,255,.08);box-shadow:0 30px 80px rgba(2,6,16,.85);max-width:980px;width:min(96vw,980px)}
 
   /* ===== Access Granted ===== */
   .grantedFx{
@@ -300,9 +274,9 @@ Paste this whole file:
   }
   .ms-logo span{display:block;background:#eaf6ff;opacity:.9}
 
-  /* ===== Keypad console (mobile first & scalable) ===== */
+  /* ===== Keypad console (restored + mobile friendly) ===== */
   .kp-shell{
-    position:relative;border-radius:14px;padding:clamp(10px,2.5vw,16px);
+    position:relative;border-radius:14px;padding:12px;
     background:
       linear-gradient(180deg, rgba(8,14,36,.72), rgba(8,14,36,.72)),
       url('https://wallpapers.com/images/hd/1920x1080-hd-coding-uxxijj0oa4s9xh25.jpg');
@@ -319,12 +293,12 @@ Paste this whole file:
   .kp-dot.g{background:#39ff86;box-shadow:0 0 8px #39ff86}
 
   .kp-display{
-    min-height:52px;border-radius:10px;border:1px solid rgba(255,255,255,.08);
+    height:52px;border-radius:10px;border:1px solid rgba(255,255,255,.08);
     background:linear-gradient(180deg,rgba(255,255,255,.03),transparent);
-    display:flex;align-items:center;justify-content:space-between;padding:8px 10px;gap:8px;margin-top:10px
+    display:flex;align-items:center;padding:8px 10px;gap:8px;margin-top:10px
   }
   .kp-display strong{font-family:Orbitron}
-  .kp-out{flex:1;text-align:right;font-family:Orbitron,monospace;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:clamp(16px,5.2vw,20px)}
+  .kp-out{font-family:Orbitron,monospace;letter-spacing:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:18px}
   .kp-display.shake{animation:kpShake .28s}
   @keyframes kpShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
 
@@ -333,29 +307,31 @@ Paste this whole file:
     color:#9bb5ff;font-weight:800
   }
 
-  /* Grid fills width; keys scale & stay square */
   .keypad{
     display:grid;
-    grid-template-columns:repeat(3, minmax(0, 1fr));
-    gap:clamp(8px,2.2vw,12px);
+    grid-template-columns:repeat(3, minmax(64px, 1fr));
+    gap:10px;
     justify-content:center;
     margin-top:12px
   }
   .kp-btn{
-    width:100%;
-    aspect-ratio:1 / 1;
+    height:clamp(64px,18vw,100px);
+    min-width:clamp(64px,18vw,100px);
     border-radius:12px;border:1px solid rgba(255,255,255,.06);
     background:radial-gradient(120% 140% at 50% 10%,rgba(255,255,255,.10),rgba(255,255,255,.03));
-    color:#eaf3ff;font-weight:900;font-size:clamp(22px,7vw,28px);
+    color:#eaf3ff;font-weight:900;font-size:clamp(20px,6vw,28px);
     display:flex;align-items:center;justify-content:center;
     cursor:pointer;user-select:none;box-shadow:0 8px 18px rgba(0,0,0,.38)
   }
   .kp-btn:active{transform:translateY(1px)}
   .kp-back{background:linear-gradient(180deg,#172a56,#0b1f40)}
 
-  /* Slightly tighten on very small phones */
-  @media (max-width: 360px){
-    .kp-btn{ font-size:clamp(18px,8vw,24px); border-radius:10px; }
+  /* ===== Responsive layout ===== */
+  @media (max-width: 980px){
+    .app{ grid-template-columns: 1fr; }
+    .time{ font-size: clamp(40px, 10vw, 64px); }
+    .modal{ width:min(96vw, 640px); }
+    .keypad{ grid-template-columns: repeat(3, 1fr); }
   }
 </style>
 </head>
@@ -393,7 +369,7 @@ Paste this whole file:
         <ol id="stepList" class="step-list">
           <li class="step" id="st1"><span class="check">✓</span><span class="txt">Enter deactivation password</span></li>
           <li class="step" id="st2"><span class="check">✓</span><span class="txt">Change Negativity Injector to <strong>GREEN</strong></span></li>
-          <li class="step" id="st3"><span class="check">✓</span><span class="txt">Shut down Main Power Supply ( Must Hold Button For 2 Seconds To Trigger Change)</span></li>
+          <li class="step" id="st3"><span class="check">✓</span><span class="txt">Shut down Main Power Supply (Hold for 2 Sec)</span></li>
           <li class="step" id="st4"><span class="check">✓</span><span class="txt">Turn off the Negativity Injector</span></li>
           <li class="step" id="st5"><span class="check">✓</span><span class="txt">Click the Activate Now button</span></li>
         </ol>
@@ -467,7 +443,7 @@ Paste this whole file:
   <!-- Translucent blue “Microsoft-y” ribbon -->
   <div id="msOverlay" class="ms-overlay" aria-hidden="true">
     <div class="ms-logo" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
-    <div>System Notification : Hardware Is No Longer Connected To The Server</div>
+    <div>System Notification: Hardware Is No Longer Connected To The Server</div>
   </div>
 
   <!-- Remote Uplink Required (keypad) -->
@@ -750,7 +726,7 @@ Paste this whole file:
     const c1 = getComputedStyle(document.documentElement).getPropertyValue(a1);
     const c2 = getComputedStyle(document.documentElement).getPropertyValue(a2);
     barCols.forEach(b=> b.style.background = `linear-gradient(180deg,${c1},${c2})`);
-    ping();
+    try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){}
     setBtnActivateState();
   }
   palette.addEventListener('click', e=>{
@@ -845,9 +821,9 @@ Paste this whole file:
         try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){}
         if (navigator.vibrate) navigator.vibrate(40);
 
-        // Manual overlay
+        // One-screen manual overlay (4.5s)
         manualOverlay.classList.add('show');
-        setTimeout(()=>manualOverlay.classList.remove('show'), 3200);
+        setTimeout(()=>manualOverlay.classList.remove('show'), 4500);
 
         setBtnActivateState();
 
@@ -1032,7 +1008,7 @@ Paste this whole file:
   let kpValue = '';
   let digitOrder = ['1','2','3','4','5','6','7','8','9','0'];
 
-  function updateKpDisplay(){ kpText.textContent = kpValue || '\u00a0'; }
+  function updateKpDisplay(){ kpText.style.fontSize='18px'; kpText.textContent = kpValue || '\u00a0'; }
   function buzz(){ kpDisplay.classList.add('shake'); setTimeout(()=>kpDisplay.classList.remove('shake'), 260); }
   function rotateDigits(){ digitOrder.unshift(digitOrder.pop()); renderKeypad(); }
   function appendDash(){
@@ -1044,6 +1020,7 @@ Paste this whole file:
     if (!/^\d$/.test(ch)) return;
     if (kpValue.length >= 10) { buzz(); return; }
     kpValue += ch;
+    kpText.style.fontSize='20px';
     updateKpDisplay();
     rotateDigits();
     autoSubmitIfComplete();
@@ -1129,6 +1106,3 @@ Paste this whole file:
 </script>
 </body>
 </html>
-```
-
-Want me to also make the keypad open full-screen on phones (hide the header behind it) or is this good as-is?
