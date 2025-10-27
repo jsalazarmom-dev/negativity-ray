@@ -91,7 +91,7 @@
     background:repeating-linear-gradient(135deg,var(--stripe) 0 12px,var(--stripe2) 12px 24px);
     color:#0a0f1c;border:2px solid #0a0f1c;border-radius:10px;
     padding:14px 22px;
-    font-weight:900; transform:scale(1.15);
+    font-weight:900; transform:scale(1.12); /* 12% bigger */
     box-shadow:0 10px 28px rgba(255,255,255,.08);
     display:none;
   }
@@ -156,14 +156,6 @@
   .pill{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.05);cursor:pointer}
   .pill.active{box-shadow:0 0 0 2px rgba(255,255,255,.14) inset}
   .pill.target{outline:2px dashed rgba(34,255,136,.6); outline-offset:2px}
-
-  /* On-screen instruction hint */
-  .hint{
-    margin-top:8px;font-size:12px;color:#bfe0ff;
-    background:rgba(255,255,255,.04);
-    border:1px dashed rgba(255,255,255,.18);
-    border-radius:8px;padding:8px 10px;
-  }
 
   .metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .metric{padding:8px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.05);font-size:13px}
@@ -410,11 +402,6 @@
           <div class="pill" data-pal="c">Drama</div>
           <div class="pill" data-pal="d">Eye-Rolls</div>
         </div>
-
-        <!-- Injector instruction -->
-        <div id="injHint" class="hint" aria-live="polite">
-          Instructions: Click On Each Button To View It&#39;s Levels
-        </div>
       </div>
 
       <div class="group">
@@ -440,10 +427,6 @@
             <div id="powerState">Online</div>
           </div>
           <button id="btnPower" class="btn btn-hold" disabled>Shut Down</button>
-        </div>
-        <!-- Power instruction -->
-        <div id="powerHint" class="hint" aria-live="polite" style="margin-top:8px">
-          Instruction: Press and hold <strong>Shut Down</strong> for <strong>2 seconds</strong> to toggle power.
         </div>
       </div>
     </aside>
@@ -702,30 +685,6 @@
     btnPower.textContent = powerOn ? 'Shut Down' : 'Power On';
   }
 
-  function updateInjHint(){
-    if (!stepOne){
-      injHint.innerHTML = 'Instructions: Click On Each Button To View It&#39;s Levels';
-    } else if (currentPalette !== 'b'){
-      injHint.innerHTML = 'Instruction: Tap <strong>Grump</strong> to set the Injector to <strong>GREEN</strong>.';
-    } else if (powerOn){
-      injHint.innerHTML = 'Instruction: Palette set. Now <strong>Press and hold Shut Down</strong> for 2 seconds.';
-    } else if (injectorOn){
-      injHint.innerHTML = 'Instruction: With power off, switch the Negativity Injector <strong>Off</strong>.';
-    } else {
-      injHint.innerHTML = 'Instruction: Press <strong>Activate Now</strong> to complete the sequence.';
-    }
-  }
-
-  function updatePowerHint(){
-    if (!stepOne){
-      powerHint.innerHTML = 'Instruction: Complete <strong>Step One</strong> to unlock power control.';
-    } else if (powerOn){
-      powerHint.innerHTML = 'Instruction: Press and hold <strong>Shut Down</strong> for <strong>2 seconds</strong> to toggle power.';
-    } else {
-      powerHint.innerHTML = 'Instruction: Press and hold <strong>Power On</strong> for <strong>2 seconds</strong> to restore power.';
-    }
-  }
-
   function setBtnActivateState(){
     const ok = stepOne && currentPalette==='b' && !powerOn && !injectorOn;
     btnActivate.classList.toggle('enabled', ok);
@@ -735,22 +694,18 @@
     chipInjector.textContent = injectorLocked ? 'Locked' : (injectorOn ? 'Online' : 'Off');
     chipInjector.className = 'chip ' + (injectorLocked ? 'locked' : (injectorOn ? 'online' : 'offline'));
     chipPower.textContent = powerOn ? 'Locked' : 'Offline';
-    chipPower.className = 'chip ' + (powerOn ? 'locked' : 'offline');
+    chipPower.className = 'chip ' + (powerOn ? 'locked' : 'offline'));
 
     btnPower.disabled = !stepOne || destroyed;
 
     document.getElementById('injGroup').classList.toggle('injector-warning', injectorOn);
     injToggle.classList.toggle('toggleGlow', injectorOn);
 
-    updateInjHint();
-    updatePowerHint();
     renderSteps();
   }
 
   // Palette switching (PREVIEW always allowed)
   const palette = document.getElementById('palette');
-  const injHint = document.getElementById('injHint');
-  const powerHint = document.getElementById('powerHint');
 
   function setPalette(which){
     if (destroyed) return;
@@ -967,7 +922,6 @@
     powerOn = !powerOn;
     setPowerLamp();
     try { sfxAccept && (sfxAccept.currentTime=0, sfxAccept.play()); } catch(e){}
-    updatePowerHint();
     setBtnActivateState();
   }
 
@@ -993,7 +947,7 @@
     }
     if (/^\d+$/.test(spec)) return {mode:'set', secs:Number(spec)*60};
     const parts = spec.split(':').map(Number);
-    if (parts.length===2 && parts.every(n=>!Number.isNaN(n))) return {mode:'set', secs:parts[0]*60+parts[1]};
+    if (parts.length===2 && p.every(n=>!Number.isNaN(n))) return {mode:'set', secs:parts[0]*60+parts[1]};
     if (parts.length===3 && parts.every(n=>!Number.isNaN(n))) return {mode:'set', secs:parts[0]*3600+parts[1]*60+parts[2]};
     return null;
   }
